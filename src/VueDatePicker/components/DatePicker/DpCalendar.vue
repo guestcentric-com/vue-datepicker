@@ -306,7 +306,9 @@
         if (isMouseDown.value && defaultedMultiDates.value.enabled && defaultedMultiDates.value.dragSelect) {
             return emit('select-date', day);
         }
-        emit('set-hover-date', day);
+        if (!isTouchOnly()) {
+            emit('set-hover-date', day);
+        }
         if (day.marker?.tooltip?.length) {
             await handleTooltip(day, weekInd, dayInd);
         }
