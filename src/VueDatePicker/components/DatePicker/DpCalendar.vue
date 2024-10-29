@@ -45,8 +45,9 @@
                             :aria-label="defaultedAriaLabels?.day?.(dayVal)"
                             :tabindex="!dayVal.current && hideOffsetDates ? undefined : 0"
                             :data-test="dayVal.value"
-                            @click.prevent="onDateSelect($event, dayVal)"
+                            @click.prevent="onDateSelectClick($event, dayVal)"
                             @touchend="onDateSelect($event, dayVal, false)"
+                            @touchmove.passive="onTouchMove($event)"
                             @keydown="checkKeyDown($event, () => $emit('select-date', dayVal))"
                             @mouseenter="onMouseOver(dayVal, weekInd, dayInd)"
                             @mouseleave="onMouseLeave(dayVal)"
@@ -122,7 +123,7 @@
         checkStopPropagation,
         getDayNames,
         getDefaultMarker,
-        isIOS,
+        isTouchOnly,
         unrefElement,
     } from '@/utils/util';
     import { useArrowNavigation, useDefaults } from '@/composables';
@@ -189,6 +190,7 @@
     const activeTooltip = ref<HTMLElement[]>([]);
     const tpArrowStyle = ref<{ left?: string; right?: string }>({ left: '50%' });
     const isMouseDown = ref(false);
+    const isScrolling = ref(false);
 
     const calendarWeeks = computed(() => {
         if (props.calendar) return props.calendar(props.mappedDates);
@@ -321,6 +323,23 @@
     const onTouchStart = (ev: TouchEvent): void => {
         touch.value.startX = ev.changedTouches[0].screenX;
         touch.value.startY = ev.changedTouches[0].screenY;
+        isScrolling.value = false;
+    };
+
+    const onTouchMove = (ev: TouchEvent): void => {
+        touch.value.endX = ev.changedTouches[0].screenX;
+        touch.value.endY = ev.changedTouches[0].screenY;
+
+        const deltaX = Math.abs(touch.value.endX - touch.value.startX);
+        const deltaY = Math.abs(touch.value.endY - touch.value.startY);
+
+        if (deltaX > 10 || deltaY > 10) {
+            isScrolling.value = true;
+        }
+
+        if (props.vertical && !props.inline) {
+            ev.preventDefault();
+        }
     };
 
     const onTouchEnd = (ev: TouchEvent): void => {
@@ -328,13 +347,7 @@
         touch.value.endY = ev.changedTouches[0].screenY;
         handleTouch();
     };
-
-    const onTouchMove = (ev: TouchEvent): void => {
-        if (props.vertical && !props.inline) {
-            ev.preventDefault();
-        }
-    };
-
+    
     const handleTouch = () => {
         const property = props.vertical ? 'Y' : 'X';
         if (Math.abs(touch.value[`start${property}`] - touch.value[`end${property}`]) > 10) {
@@ -381,11 +394,19 @@
     };
 
     const onDateSelect = (ev: Event, dayVal: ICalendarDay, isClick = true) => {
-        if ((isClick && isIOS()) || (!isClick && !isIOS())) return;
+        if (isScrolling.value) {
+            isScrolling.value = false;
+            return
+        }
         if (!defaultedMultiDates.value.enabled) {
             checkStopPropagation(ev, defaultedConfig.value);
             emit('select-date', dayVal);
         }
+    };
+
+    const onDateSelectClick = (ev: Event, dayVal: ICalendarDay, isClick = true) => {
+        if (isTouchOnly()) return;
+        onDateSelect(ev, dayVal, isClick);
     };
 
     const onTpClick = (ev: Event) => {

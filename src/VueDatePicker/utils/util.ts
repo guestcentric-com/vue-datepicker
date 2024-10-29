@@ -319,3 +319,7 @@ export const isIOS = () => {
         (navigator.userAgent.includes('Mac') && 'ontouchend' in document)
     );
 };
+
+export const isTouchOnly = () => {
+    return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+}
