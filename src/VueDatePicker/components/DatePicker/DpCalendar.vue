@@ -124,6 +124,7 @@
         getDayNames,
         getDefaultMarker,
         isTouchOnly,
+        isIOS,
         unrefElement,
     } from '@/utils/util';
     import { useArrowNavigation, useDefaults } from '@/composables';
@@ -400,6 +401,7 @@
             isScrolling.value = false;
             return
         }
+        if ((!isClick && !isIOS())) return;
         if (!defaultedMultiDates.value.enabled) {
             checkStopPropagation(ev, defaultedConfig.value);
             emit('select-date', dayVal);
