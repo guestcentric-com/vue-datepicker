@@ -401,7 +401,7 @@
             isScrolling.value = false;
             return
         }
-        if ((!isClick && !isIOS())) return;
+        if ((!isClick && !isIOS() && !isTouchOnly())) return;
         if (!defaultedMultiDates.value.enabled) {
             checkStopPropagation(ev, defaultedConfig.value);
             emit('select-date', dayVal);
